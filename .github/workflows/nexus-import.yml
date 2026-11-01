@@ -1,0 +1,32 @@
+name: Import verified Nexus source
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download and verify authored source
+        run: |
+          curl --fail --location --max-time 60 'https://opendroid-agent-lab.biggerflea1.chatgpt.site/nexus-source-e4f9335f9f78.zip' -o /tmp/nexus-source.zip
+          echo 'e4f9335f9f782d458922160b7b8cbda6baae24632c31d09ccc253ba0c00593a9  /tmp/nexus-source.zip' | sha256sum -c -
+      - name: Commit source to isolated branch
+        run: |
+          git switch -C nexus/platform-foundation
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+          with zipfile.ZipFile('/tmp/nexus-source.zip') as archive:
+              for info in archive.infolist():
+                  path=Path(info.filename)
+                  if path.is_absolute() or '..' in path.parts or '.github' in path.parts:
+                      raise ValueError('Unsafe archive path')
+              archive.extractall('.')
+          PY
+          git config user.name 'OpenDroid Nexus Builder'
+          git config user.email '43252327+youcefhor@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet || git commit -m 'Build Nexus foundation: persistent agents, evidence execution, workflows and SaaS workspace'
+          git push origin HEAD:refs/heads/nexus/platform-foundation
