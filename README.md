@@ -1,107 +1,117 @@
-# OpenDroid Studio · v0.3
+# OpenDroid Nexus · 0.4 foundation
 
-An Arabic-first, mobile-responsive Android agent workspace, with an interactive
-virtual phone, command planner, execution timeline, result verification,
-bounded recovery, approval dialogs, and a separately authenticated local ADB bridge.
+An Arabic/English agent workspace with real server-side persistence, evidence
+execution, saved agents, workflow checkpoints and private reports. This is a
+working foundation, **not a production-ready or fully autonomous SaaS**.
 
-## Try it now
+**Application:** https://opendroid-agent-lab.biggerflea1.chatgpt.site
 
-**[Open the interactive demo](https://opendroid-agent-lab.biggerflea1.chatgpt.site)**
+## First complete journey
 
-اضغط **تشغيل المهمة** لتجربة إعداد الهاتف الافتراضي. أو اختر حفظ ملاحظة، بحثاً
-تجريبياً، أو إرسال رسالة تجريبية تتوقف حتى توافق. يمكنك النقر على تطبيقات الهاتف
-مباشرة. جميع هذه التغييرات داخل المحاكاة فقط؛ لا تتحكم بهاتف الزائر الحقيقي.
+1. Open a free guest workspace, or use the platform's Sign in with ChatGPT.
+2. Add Source Research from the starter library or create an agent.
+3. Enter a public HTTPS URL and run a task.
+4. Follow server-persisted execution events.
+5. Read/download the report, inspect source URL, fetch timestamp and SHA-256.
+6. Reload and return to execution history. Records are stored in D1, not localStorage.
 
-## What is implemented
+Evidence mode performs deterministic source extraction. It does **not** pretend to
+understand arbitrary natural-language instructions. AI planning/synthesis requires
+an OpenAI API key entered in Settings. No platform API key is bundled.
 
-- Buildless web UI in `web/`, RTL Arabic, responsive layout, no runtime dependencies.
-- Interactive home screen, settings, notes, messages and simulated search results.
-- Arabic/English rule-based planning for the supported intents; unknown commands fail explicitly.
-- Execution state machine: plan → execute → verify → complete/error.
-- Cooperative cancellation between actions. One retry only for explicitly retryable
-  failures that occurred before any effect; no blind replay of device actions.
-- Mandatory per-action approvals for simulated send/delete; every real device plan
-  requires a separate, single-use approval bound to the selected device (120-second expiry).
-- JSON session log export, transient-error injection and explicit simulation labels.
-- Optional server-side OpenAI-compatible chat-completions planner for **simulation only**.
-- Authenticated local ADB mode with device selection, screenshot, settings, home and
-  coordinate taps. No arbitrary shell supplied by users or models.
+## Implemented
 
-## Run the web interface locally
+- Arabic RTL/English UI; light/dark preferences; responsive SaaS workspace.
+- Platform-owned ChatGPT authentication, plus random-token guest sessions. No passwords collected.
+- Agents: create/edit/test/duplicate/delete, tools, limits, permission policy,
+  memory preference, model, input/output preferences, and immutable saved versions.
+- Five starter definitions: source research, product comparison, job listing analysis,
+  page-change comparison, and text document analysis. They read supplied URLs; no
+  general search engine integration or jobs feed is fabricated.
+- Real HTTPS fetching with redirect, network, robots, payload-size and timeout checks.
+- Real TXT/Markdown/JSON text extraction with line references (not PDF/OCR).
+- AI adapter: server-side OpenAI chat completions, structured plan allowlist,
+  bounded URLs/tools, token usage tracking and cited synthesis. Cost remains unknown
+  rather than inventing prices. Provider errors are recorded, not replaced with mock answers.
+- Run lifecycle: queued/running/approval/completed/failed/cancelled; cancellation
+  between steps; one timeout retry for read-only operations; expiring execution lease.
+- Private persisted reports, ownership checks, audit trail, rate limits and Free-tier quotas.
+- Workflow editor: ordered trigger/agent/condition/approval/store nodes; a condition
+  runs/skips the next planned operation; stop-on-error policy. No loops/background queue.
+- Community publishing/import of actual agent definitions, with explicit publication
+  confirmation. Reports and secrets are never included. No fabricated listings or reviews.
+- Free/Pro/Business entitlement definitions; only Free is available. Billing is off.
+- Separate Playwright runner service and adapter; not deployed/configured on the public
+  instance. Read-only navigation, reading, snapshots and local field filling are supported
+  by its source. Clicks, form submission, login and payment are disabled.
+- Existing Python Android/ADB code and original web simulator preserved under `src/`
+  and `web/`. Nexus does not require an Android phone.
 
-Python 3.10+ and a checkout of this repository:
+## Not finished / not verified
+
+- No real provider credential was supplied, so paid AI inference is not verified end-to-end.
+- No isolated browser hosting account is configured. The public deployment uses HTTP
+  source extraction, **not** a headless browser. Runner policy unit tests are not proof
+  of browser execution. Runner Chromium and Docker operation require deployment testing.
+- Recurring schedules, durable background workers, email, search providers, team
+  membership, payments, paid marketplace sales, account recovery and moderation are absent.
+- Memory/output-format preferences are stored; no vector memory or arbitrary output
+  schema execution is implemented. Historical page fingerprint comparison is available.
+- No physical Android device was available. Full Android autonomy is unsupported.
+- No penetration test, load test or independent security audit has been completed.
+
+## Architecture
+
+- `app/page.tsx`, `app/globals.css`: React workspace and responsive design system.
+- `app/api/nexus/[[...path]]/route.ts`: same-origin API.
+- `lib/nexus/server.ts`: identity, authorization, D1 storage, secrets and execution.
+- `lib/nexus/core.mjs`: pure validation, workflow rules, extraction and report creation.
+- `db/schema.ts`, `drizzle/`: D1 schema and generated immutable migrations.
+- `services/browser-runner/`: separately deployed isolated Playwright service.
+- `worker/`, `scripts/vite/`: preserved Sites/Vinext Cloudflare integration.
+
+Cloudflare Workers + D1 minimize idle hosting overhead. Platform SIWC avoids
+operating password storage. Guest sessions are explicitly device-bound and expire
+after 30 days; linking ChatGPT transfers the current guest records to that account.
+
+## Development and reproducible deployment
+
+Node 22.13+ and pnpm version from package.json. Installation is for contributors,
+not a requirement for using the hosted application.
 
 ```bash
-python -m pip install -e .
-python -m opendroid.server
+pnpm install --frozen-lockfile
+pnpm exec drizzle-kit generate # only after schema changes
+pnpm build
+# Apply pending SQL to local D1 before local development (see docs/ARCHITECTURE.md).
+pnpm dev
 ```
 
-Open the private session URL printed by the server. It contains a token in its
-fragment; the UI removes it from the address bar and keeps it in session memory.
-The server binds to `127.0.0.1:8765` by default. Static-only demo also works with
-`python -m http.server 8000 --directory web`; ADB and AI need `opendroid.server`.
-
-## Real Android mode
-
-1. Install official [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools).
-2. Enable USB debugging on your own phone, connect it, and approve the computer on the phone.
-3. Start `python -m opendroid.server` and open its private URL on the computer.
-4. Select **جهاز حقيقي · ADB**, click **فحص اتصال ADB**, then enter a supported command.
-5. Review and approve the plan. A real screenshot replaces the simulated phone.
-
-Supported real commands: `افتح الإعدادات`, `الرئيسية`, `لقطة شاشة`, `انقر 100 200`.
-Use `--serial DEVICE_ID` when multiple devices are attached. For a phone browser
-on the same trusted LAN, bind to the computer's **specific private IP**, e.g.
-`--host 192.168.1.10`, and open the printed URL there. This uses unencrypted local
-HTTP: use only a trusted private network, never expose the bridge to the internet,
-and stop it after use. Do not publish session URLs. No CORS access is allowed.
-The public demo does not connect to localhost or secretly access devices.
-
-Settings verification inspects Android's resumed activity. Screenshot verification
-checks PNG data. Home and coordinate taps return a screen for **human visual
-verification**; the interface does not claim their semantic outcome was verified.
-No physical phone was available during development; hardware end-to-end behavior
-remains unverified. OEM settings names and ADB behavior can differ.
-
-## Optional AI interpretation
-
-Set these environment variables in your **local server environment**:
-
-| Variable | Value |
-| --- | --- |
-| `OPENDROID_AI_URL` | Full HTTPS chat-completions endpoint from your provider |
-| `OPENDROID_AI_MODEL` | Your provider's model identifier |
-| `OPENDROID_AI_KEY` | Your API key |
-
-Restart the local server and enable **تفسير الأمر بنموذج AI**. Only command text
-is sent to your configured provider, and the returned JSON must pass the strict
-allowlist validator. Screenshots are not sent. Keys never enter client JavaScript,
-logs, or this repository. This option may incur provider costs. It does not make
-the agent general-purpose, and AI plans never drive real ADB actions in v0.3.
-
-## Tests
+The tracked `.openai/hosting.json` identifies this deployment and its DB/BUCKET
+bindings. The Sites source workflow builds, packages, applies generated migrations
+and deploys the matching commit. No production database is created in request handlers.
 
 ```bash
+node --test tests/nexus/*.test.mjs tests/web/*.test.mjs services/browser-runner/policy.test.mjs
 python -m unittest discover -s tests -v
-node --test tests/web/*.test.mjs
-node --check web/app.mjs
+pnpm exec tsc --noEmit
+node tests/nexus/api.integration.mjs # local HTTP server + migrated D1 required
 ```
 
-Tests cover task execution, Arabic planning, approval denial/acceptance, cancellation,
-concurrency, verification failures, transient recovery, ADB allowlists, device
-selection, single-use approvals, HTTP authentication and origin protection.
-GitHub Actions runs tests on Python 3.10–3.13 with Node 22.
+## Security and secrets
 
-The original CLI (`opendroid devices`, `screenshot`, `tap`, `swipe`, `hierarchy`,
-`run`) remains available. See `examples/swipe.json` for its JSON format.
+`NEXUS_ENCRYPTION_KEY` is a server-only 32-byte hex key. User provider keys are
+AES-GCM encrypted with random IVs and never returned by APIs. The operator must
+protect/backup the encryption key; losing it makes saved credentials unrecoverable.
+Use Sites secret settings, never the hosting manifest or frontend bundle.
+`NEXUS_ADMIN_USER_IDS` is an explicit comma-separated operator allowlist; the first
+visitor is not an administrator. Browser runner secrets and URLs are operator-only.
 
-## Architecture and limitations
+API writes require same-origin requests and a valid session or platform identity.
+Every owned lookup checks user_id. Guests have no admin access. Prompt injection
+boundaries are structural: retrieved content is data, AI can read only user-approved
+URLs and allowlisted tools, and synthesis has no tool access. This reduces risk;
+it does not make arbitrary AI interpretation inherently trustworthy.
 
-`web/engine.mjs` is the DOM-independent simulation engine. `web/app.mjs` renders
-state and manages user approvals. `src/opendroid/server.py` serves the same UI,
-keeps credentials server-side and isolates real device execution. Simulation is
-in-memory and resets on reload. Search results are designed local samples, not
-live web search. No APK, phone-only native automation, remote cloud ADB service,
-vision planner, or arbitrary-app autonomous control is included.
-
-MIT licensed. Contributions welcome; see CONTRIBUTING.md.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
+[docs/SECURITY.md](docs/SECURITY.md). MIT licensed.
