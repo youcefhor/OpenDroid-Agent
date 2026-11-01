@@ -39,6 +39,19 @@ jobs:
           pnpm dev -- --hostname 127.0.0.1 --port 4173 > /tmp/nexus-dev.log 2>&1 &
           for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/api/nexus/health && break || sleep 2; done
           node tests/nexus/api.integration.mjs
+      - name: Real UI journeys at mobile and desktop widths
+        if: steps.nexus.outputs.exists == 'true'
+        run: |
+          npm --prefix services/browser-runner install --ignore-scripts
+          services/browser-runner/node_modules/.bin/playwright install --with-deps chromium
+          node tests/e2e/journey.mjs
+      - name: Upload UI verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-ui-verification
+          path: test-results/
+          if-no-files-found: ignore
       - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
