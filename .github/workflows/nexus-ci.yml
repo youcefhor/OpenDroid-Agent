@@ -1,0 +1,47 @@
+name: Nexus platform checks
+on:
+  push:
+    branches: [main, 'nexus/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  platform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Detect Nexus source
+        id: nexus
+        run: |
+          if test -f package.json; then echo 'exists=true' >> "$GITHUB_OUTPUT"; fi
+      - name: Install dependencies
+        if: steps.nexus.outputs.exists == 'true'
+        run: |
+          npm install -g pnpm@11.25.0
+          pnpm install --frozen-lockfile
+      - name: Core and browser policy unit tests
+        if: steps.nexus.outputs.exists == 'true'
+        run: node --test tests/nexus/*.test.mjs tests/web/*.test.mjs services/browser-runner/policy.test.mjs
+      - name: Typecheck and build
+        if: steps.nexus.outputs.exists == 'true'
+        run: |
+          pnpm exec tsc --noEmit
+          pnpm build
+      - name: Apply local test migrations
+        if: steps.nexus.outputs.exists == 'true'
+        run: node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_yielding_prodigy.sql
+      - name: Real API and database integration checks
+        if: steps.nexus.outputs.exists == 'true'
+        run: |
+          pnpm dev -- --hostname 127.0.0.1 --port 4173 > /tmp/nexus-dev.log 2>&1 &
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/api/nexus/health && break || sleep 2; done
+          node tests/nexus/api.integration.mjs
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-diagnostics
+          path: /tmp/nexus-dev.log
