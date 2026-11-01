@@ -8,13 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Download and verify authored source
         run: |
-          curl --fail --location --max-time 60 'https://opendroid-agent-lab.biggerflea1.chatgpt.site/nexus-source-e4f9335f9f78.zip' -o /tmp/nexus-source.zip
-          echo 'e4f9335f9f782d458922160b7b8cbda6baae24632c31d09ccc253ba0c00593a9  /tmp/nexus-source.zip' | sha256sum -c -
+          curl --fail --location --max-time 60 'https://opendroid-agent-lab.biggerflea1.chatgpt.site/nexus-source-a6370a8c6e41.zip' -o /tmp/nexus-source.zip
+          echo 'a6370a8c6e41c07da306dd05fb80bbec86fca296f9ba49d88e2487b7fe3019d8  /tmp/nexus-source.zip' | sha256sum -c -
       - name: Commit source to isolated branch
         run: |
-          git switch -C nexus/platform-foundation
+          git fetch origin nexus/platform-foundation || true
+          if git show-ref --verify --quiet refs/remotes/origin/nexus/platform-foundation; then
+            git switch -C nexus/platform-foundation origin/nexus/platform-foundation
+          else
+            git switch -C nexus/platform-foundation
+          fi
+          git config user.name 'OpenDroid Nexus Builder'
+          git config user.email '43252327+youcefhor@users.noreply.github.com'
+          git merge origin/main --no-edit
           python3 - <<'PY'
           import zipfile
           from pathlib import Path
