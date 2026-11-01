@@ -31,7 +31,7 @@ def plan_device(command):
     match = re.fullmatch(r'(?:انقر|tap) ([0-9]{1,5}) ([0-9]{1,5})', normalized)
     if match and all(int(v) <= 10000 for v in match.groups()):
         return {'action': 'tap', 'x': int(match[1]), 'y': int(match[2]),
-                'label': 'نقر على إحداثيات محددة؛ التحقق البصري مطلوب'}
+                'label': f'نقر عند ({match[1]}, {match[2]})؛ التحقق البصري مطلوب'}
     raise ValueError('ADB يدعم حالياً: افتح الإعدادات، الرئيسية، لقطة شاشة، انقر 100 200. أوامر النموذج لا تنفذ على الجهاز.')
 
 
