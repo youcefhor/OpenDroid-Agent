@@ -8,7 +8,7 @@ function log(title,detail='',kind='info'){
  const item={time:new Date().toISOString(),title,detail,kind,mode};entries.push(item);
  if(entries.length>300)entries.shift();if($('logs').querySelector('.welcome'))$('logs').replaceChildren();
  const row=node('div',undefined,'log '+kind);row.append(node('span',kind==='error'?'!':kind==='success'?'✓':'↳','log-symbol'));
- const body=node('div');body.append(node('strong',title),node('small',detail));row.append(body,node('time',new Date().toLocaleTimeString('en-GB',{hour12:false})));$('logs').append(row);if($('logs').children.length>300)$('logs').firstChild.remove();$('logs').scrollTop=$('logs').scrollHeight;
+ const body=node('div');body.append(node('strong',title),node('small',(mode==='sim'?'محاكاة · ':'جهاز حقيقي · ')+detail));row.append(body,node('time',new Date().toLocaleTimeString('en-GB',{hour12:false})));$('logs').append(row);if($('logs').children.length>300)$('logs').firstChild.remove();$('logs').scrollTop=$('logs').scrollHeight;
 }
 function status(text){$('status').textContent=text;}
 function renderPhone(){
@@ -66,7 +66,7 @@ async function api(path,body){
  if(!response.ok)throw Error(data.error||'فشل اتصال الخادم');return data;
 }
 async function run(){
- if(busy)return;setBusy(true);Object.keys(counts).forEach(k=>{counts[k]=0;$(k).textContent='0';});$('progressBar').style.width='0%';
+ if(busy)return;setBusy(true);status('جارٍ التخطيط');$('plan').replaceChildren(node('li','جارٍ إعداد الخطة…','empty'));$('stepCount').textContent='تخطيط';Object.keys(counts).forEach(k=>{counts[k]=0;$(k).textContent='0';});$('progressBar').style.width='0%';
  try{
  if(mode==='adb'){
   if(!deviceConnected)throw Error('اتصل بالخادم المحلي وهاتف ADB أولاً');
@@ -74,7 +74,7 @@ async function run(){
   if(!await approve({label:result.description},true))throw Error('ألغيت الموافقة؛ لم ينفذ شيء');
   status('تنفيذ على الجهاز الحقيقي');const outcome=await api('/api/device/execute',{approval_id:result.approval_id});
   counts.completed=outcome.completed;counts.verified=outcome.verified;$('completed').textContent=counts.completed;$('verified').textContent=counts.verified;$('progressBar').style.width='100%';
-  showReal(outcome);status(outcome.verified?'اكتمل وتم التحقق من الجهاز':'نُفذ الإجراء؛ تحقق بصري مطلوب');log('نتيجة الجهاز الحقيقي',outcome.message,'success');return;
+  const realStep=$('step-0');if(realStep){realStep.className='done';realStep.querySelector('.num').textContent=outcome.verified?'✓':'↗';}showReal(outcome);status(outcome.verified?'اكتمل وتم التحقق من الجهاز':'نُفذ الإجراء؛ تحقق بصري مطلوب');log('نتيجة الجهاز الحقيقي',outcome.message,'success');return;
  }
  let p;if($('ai').checked){const data=await api('/api/plan',{command:$('command').value});p=validatePlan(data.steps);log('تفسير AI','النص أرسل إلى النموذج المعد على خادمك');}else p=planCommand($('command').value);
  renderPlan(p);if(matchMedia('(max-width:650px)').matches)document.querySelector('.device-panel').scrollIntoView({behavior:'smooth',block:'start'});log('الخطة جاهزة',p.length+' إجراءات · '+($('ai').checked?'تفسير AI':'تفسير محلي محدود'));
@@ -83,10 +83,11 @@ async function run(){
  finally{setBusy(false);}
 }
 function showReal(data){const c=$('phoneContent');c.replaceChildren();if(data.screenshot){const img=node('img',undefined,'real-shot');img.alt='لقطة فعلية من جهاز Android المتصل';img.src='data:image/png;base64,'+data.screenshot;c.append(img);}else c.append(node('div','جهاز متصل. شغّل أمراً لالتقاط الشاشة.','real-placeholder'));}
+$('ai').onchange=()=>{$('interpreterBadge').textContent=$('ai').checked?'AI · خادم محلي':'مفسّر محلي';};
 $('run').onclick=run;$('stop').onclick=()=>{if(mode==='sim'){runner.cancel();resolveApproval(false);log('طلب إيقاف','ستتوقف المهمة قبل الإجراء التالي');}else log('إجراء ADB قيد التنفيذ','الأمر الحقيقي الحالي لا يمكن التراجع عنه؛ لن تبدأ مهمة جديدة.');};
 $('command').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')run();});
 for(const b of document.querySelectorAll('[data-command]'))b.onclick=()=>{$('command').value=b.dataset.command;run();};
-function setMode(value){mode=value;deviceConnected=false;$('simTab').setAttribute('aria-selected',String(value==='sim'));$('adbTab').setAttribute('aria-selected',String(value==='adb'));$('simNotice').hidden=value!=='sim';$('adbPanel').hidden=value!=='adb';$('examples').hidden=value!=='sim';$('modeBadge').textContent=value==='sim'?'SIMULATION':'ADB · NOT CONNECTED';$('phoneCaption').textContent=value==='sim'?'OpenDroid Virtual · تفاعلي':'ADB · غير متصل';$('screen').classList.remove('dark-screen');$('command').value=value==='sim'?'افتح الإعدادات وشغّل الواي فاي والمظهر الداكن':'افتح الإعدادات';if(value==='sim')renderPhone();else{$('phoneContent').replaceChildren(node('div','⌁\nوضع جهاز حقيقي\nلا توجد صورة محاكاة هنا.\nاتصل بالخادم المحلي لعرض هاتفك.','real-placeholder'));}log('تغيير وضع التشغيل',value==='sim'?'محاكاة محلية':'ADB حقيقي · اتصال مطلوب');}
+function setMode(value){mode=value;deviceConnected=false;plan=[];$('plan').replaceChildren(node('li','خطتك التالية ستظهر هنا.','empty'));$('stepCount').textContent='بانتظار الأمر';Object.keys(counts).forEach(k=>{counts[k]=0;$(k).textContent='0';});$('progressBar').style.width='0%';$('elapsed').textContent='00:00';status(value==='sim'?'جاهز للتجربة':'غير متصل بجهاز حقيقي');$('screen').classList.toggle('real-mode',value==='adb');document.querySelector('.mini-info').textContent=value==='sim'?'انقر تطبيقاً على الشاشة أو دع الوكيل ينفذ المهمة.':'صورة الجهاز الحقيقي ستظهر بعد اتصال ADB وتنفيذ أمر مصرح به.';$('simTab').setAttribute('aria-selected',String(value==='sim'));$('adbTab').setAttribute('aria-selected',String(value==='adb'));$('simNotice').hidden=value!=='sim';$('adbPanel').hidden=value!=='adb';$('examples').hidden=value!=='sim';$('modeBadge').textContent=value==='sim'?'SIMULATION':'ADB · NOT CONNECTED';$('phoneCaption').textContent=value==='sim'?'OpenDroid Virtual · تفاعلي':'ADB · غير متصل';$('screen').classList.remove('dark-screen');$('command').value=value==='sim'?'افتح الإعدادات وشغّل الواي فاي والمظهر الداكن':'افتح الإعدادات';if(value==='sim')renderPhone();else{$('phoneContent').replaceChildren(node('div','⌁\nوضع جهاز حقيقي\nلا توجد صورة محاكاة هنا.\nاتصل بالخادم المحلي لعرض هاتفك.','real-placeholder'));}log('تغيير وضع التشغيل',value==='sim'?'محاكاة محلية':'ADB حقيقي · اتصال مطلوب');}
 $('simTab').onclick=()=>setMode('sim');$('adbTab').onclick=()=>setMode('adb');
 $('connect').onclick=async()=>{sessionToken=$('sessionToken').value||sessionToken;$('sessionToken').value='';try{const data=await api('/api/device');deviceConnected=true;$('deviceStatus').textContent='متصل: '+data.serial;$('modeBadge').textContent='ADB · CONNECTED';$('phoneCaption').textContent='Android حقيقي · '+data.serial;showReal(data);log('ADB متصل',data.serial);}catch(e){deviceConnected=false;$('deviceStatus').textContent=e.message;log('تعذر الاتصال',e.message,'error');}};
 for(const b of document.querySelectorAll('[data-nav]'))b.onclick=()=>{if(!busy&&mode==='sim'){sim.state.app='home';renderPhone();}};
