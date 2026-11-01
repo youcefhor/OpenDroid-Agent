@@ -1,0 +1,1 @@
+{"steps":[{"action":"tap","x":200,"y":400},{"action":"wait","seconds":1},{"action":"swipe","x1":200,"y1":700,"x2":200,"y2":250,"duration":500}]}
