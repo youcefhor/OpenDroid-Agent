@@ -115,3 +115,6 @@ it does not make arbitrary AI interpretation inherently trustworthy.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
 [docs/SECURITY.md](docs/SECURITY.md). MIT licensed.
+
+## 0.5: AI open-source scout
+A Gemini-backed agent converts Arabic/English requests into a GitHub repository query, retrieves up to three actual public repository records, then produces a cited comparison and retains provenance. No supplied URLs required. This is a GitHub metadata research tool, not general web search, runtime evaluation, or unrestricted browser control. Server-only NEXUS_GEMINI_KEY uses the operator-authorized free-tier project; shared cap 40 provider calls/day, with no automatic paid fallback. Provider/project quotas may stop it earlier. Model summaries require human review. Do not send sensitive information to this shared trial.
