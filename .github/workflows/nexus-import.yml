@@ -12,8 +12,8 @@ jobs:
           fetch-depth: 0
       - name: Download and verify authored source
         run: |
-          curl --fail --location --max-time 60 'https://opendroid-agent-lab.biggerflea1.chatgpt.site/nexus-source-b50ce5c66d7d.zip' -o /tmp/nexus-source.zip
-          echo 'b50ce5c66d7dc0d3c68ca757a4f890da03719ad8917d223fecb1e3e5106d6a9f  /tmp/nexus-source.zip' | sha256sum -c -
+          curl --fail --location --max-time 60 'https://opendroid-agent-lab.biggerflea1.chatgpt.site/nexus-source-365246f53dcc.zip' -o /tmp/nexus-source.zip
+          echo '365246f53dcc3bee4f43dfb826df5cb977be4d16d9b66e637c75e8dcfd5c0e74  /tmp/nexus-source.zip' | sha256sum -c -
       - name: Commit source to isolated branch
         run: |
           git fetch origin nexus/platform-foundation || true
@@ -40,3 +40,4 @@ jobs:
           git add -A
           git diff --cached --quiet || git commit -m 'Build Nexus foundation: persistent agents, evidence execution, workflows and SaaS workspace'
           git push origin HEAD:refs/heads/nexus/platform-foundation
+
