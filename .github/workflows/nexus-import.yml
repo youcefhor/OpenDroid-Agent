@@ -12,8 +12,8 @@ jobs:
           fetch-depth: 0
       - name: Download and verify authored source
         run: |
-          curl --fail --location --max-time 60 'https://opendroid-agent-lab.biggerflea1.chatgpt.site/nexus-source-1beb0f3e83fa.zip' -o /tmp/nexus-source.zip
-          echo '1beb0f3e83faf7468165d1279741e26ffb880cf296681c721b5b15d2b9b66e2e  /tmp/nexus-source.zip' | sha256sum -c -
+          curl --fail --location --max-time 60 'https://opendroid-agent-lab.biggerflea1.chatgpt.site/nexus-source-72a0db4301a4.zip' -o /tmp/nexus-source.zip
+          echo '72a0db4301a4b8647e743923dded14f0fdae4fd7c9e7abbd5b933ed4c1cf5cbb  /tmp/nexus-source.zip' | sha256sum -c -
       - name: Commit source to isolated branch
         run: |
           git fetch origin nexus/platform-foundation || true
