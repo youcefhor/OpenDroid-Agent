@@ -2,7 +2,7 @@
 
 **An Arabic/English workspace for agents, execution history and reports you can inspect.**
 
-[Open the application](https://opendroid-agent-lab.biggerflea1.chatgpt.site) · [Watch the walkthrough](https://github.com/youcefhor/youcefhor/blob/main/assets/nexus-walkthrough.mp4) · [Architecture](docs/ARCHITECTURE.md) · [Security](docs/SECURITY.md) · [CI](https://github.com/youcefhor/OpenDroid-Agent/actions)
+[Open the application](https://opendroid-agent-lab.biggerflea1.chatgpt.site) · [Watch the walkthrough](https://github.com/user-attachments/assets/16a0def5-dd55-4f6c-8e1c-d200158cdf6e) · [Architecture](docs/ARCHITECTURE.md) · [Security](docs/SECURITY.md) · [CI](https://github.com/youcefhor/OpenDroid-Agent/actions)
 
 ![Arabic workspace](https://raw.githubusercontent.com/youcefhor/youcefhor/main/assets/nexus-overview.jpg)
 
@@ -14,7 +14,9 @@ The shared trial has a daily model-call cap and provider quotas. The current dis
 
 ## Walk through the interface
 
-[Watch or download the 20-second walkthrough](https://github.com/youcefhor/youcefhor/blob/main/assets/nexus-walkthrough.mp4)
+https://github.com/user-attachments/assets/16a0def5-dd55-4f6c-8e1c-d200158cdf6e
+
+[Watch or download the 20-second walkthrough](https://github.com/user-attachments/assets/16a0def5-dd55-4f6c-8e1c-d200158cdf6e)
 
 The video steps through actual interface screenshots, including a previously completed research run.
 
